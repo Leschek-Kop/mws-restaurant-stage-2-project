@@ -154,6 +154,7 @@ class DBHelper {
           const idxDot = 1;
           return (`/img/${restaurant.photograph.slice(0, idxDot)}-${w}_${s}${restaurant.photograph.slice(idxDot, restaurant.photograph.length)}.jpg`);
       }
+      return (`/img/altPic-${w}_${s}.jpg`);
   }
 
   /**
