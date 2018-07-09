@@ -8,8 +8,8 @@ class DBHelper {
    * Change this to restaurants.json file location on your server.
    */
   static get DATABASE_URL() {
-    const port = 8000 // Change this to your server port
-    return `http://localhost:${port}/data/restaurants.json`;
+    const port = 1337 // Change this to your server port
+    return `http://localhost:${port}/restaurants`;
   }
 
   /**
@@ -21,7 +21,7 @@ class DBHelper {
     xhr.onload = () => {
       if (xhr.status === 200) { // Got a success response from server!
         const json = JSON.parse(xhr.responseText);
-        const restaurants = json.restaurants;
+        const restaurants = json;
         callback(null, restaurants);
       } else { // Oops!. Got an error from server.
         const error = (`Request failed. Returned status of ${xhr.status}`);
@@ -150,8 +150,10 @@ class DBHelper {
    * Restaurant image URL.
    */
   static imageUrlForRestaurant(restaurant, w= "270", s="s") {
-    const idxDot = restaurant.photograph.indexOf(".");  //Find dot to split restaurant.photograph for different image sizes 
-    return (`/img/${restaurant.photograph.slice(0, idxDot)}-${w}_${s}${restaurant.photograph.slice(idxDot, restaurant.photograph.length)}`);
+      if(restaurant.photograph){
+          const idxDot = 1;
+          return (`/img/${restaurant.photograph.slice(0, idxDot)}-${w}_${s}${restaurant.photograph.slice(idxDot, restaurant.photograph.length)}.jpg`);
+      }
   }
 
   /**
