@@ -349,6 +349,8 @@ let dbPromise = idb.open(idbName+version, 1, function(upgradeDb){
 self.addEventListener('install', (event) => {
     const urlToCache = [
         '/',
+        '/favicon.ico.png',
+        '/manifest.json',
         'sw.js',
         'js/main.js',
         'js/dbhelper.js',
@@ -460,6 +462,7 @@ serveSide = (request) => {
                 });
             }
         }).then((data) => {
+            //console.log(data);
             return new Response(JSON.stringify(data['data']), { "status" : 200 , "statusText" : "OK" });
         });
     }else{// Cache page data -> OLD code
