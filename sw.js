@@ -429,31 +429,40 @@ serveContent = (request) => {
 serveSide = (request) => {
     var reqUrl = new URL(request.url);
     var storageUrl = request.url;    
-    if (reqUrl.pathname === '/restaurants'){// Put restaurant data to idb -> NEW code
-        
-        
-        
-        //TODO fill db with data
-        
-        
-        
-        
+    if (reqUrl.pathname === '/restaurants'){// Put restaurant data to idb -> NEW code        
         //Nothing found in idb
-        return fetch(storageUrl).then((networkResponse) => {
-            return networkResponse.json();
-        }).then((data) => {
-            console.info(data);
-            //Adding to idb
-            dbPromise.then(db => {
-                const tx = db.transaction(idbName+version, 'readwrite');
-                data.forEach((d) => {
-                    tx.objectStore(idbName+version).put({
-                        id: d['id'],
-                        data: d
+        //Check db if data is available
+        return dbPromise.then(db => {
+            return db.transaction(idbName+version).objectStore(idbName+version).getAll();
+        }).then((allData) => {
+            if (allData.length !== 0) {
+                let data = [];
+                for (let i = 0;i < allData.length; i++){
+                    data.push(allData[i].data);
+                }
+                console.log('idb');
+                return data;//return data from idb
+            }else{
+                return fetch(storageUrl).then((networkResponse) => {//return data from internet
+                    return networkResponse.json();
+                }).then((data) => {
+                    //Adding to idb
+                    dbPromise.then(db => {
+                        const tx = db.transaction(idbName+version, 'readwrite');
+                        data.forEach((d) => {
+                            tx.objectStore(idbName+version).put({
+                                id: d['id'],
+                                data: d
+                            });
+                        });
+                        return tx.complete;
                     });
-                });
-                return tx.complete;
-            });
+                    console.log('internet');
+                    return data;
+                })
+            }
+        }).then((data) => {
+            console.log(data);
             return new Response(JSON.stringify(data), { "status" : 200 , "statusText" : "OK" });
         });
     }else{// Cache page data -> OLD code
