@@ -29,6 +29,8 @@ class DBHelper {
           }else{
               callback(null, data);  
           }
+      }).catch((e) => {
+          console.log('uuppps fetching restaurant data went wrong. Error: ', e);
       });
   }
 
