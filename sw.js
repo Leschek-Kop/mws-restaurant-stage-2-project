@@ -330,11 +330,11 @@ const contentImgsCache = 'restaurant-imgs-'+version;
 const contentCache = 'restaurant-web-'+version;
 const idbName = 'restaurant-db-';
 
-///**
-//* Create DB
-//*/
-////Promise welcher zum setzen und holen von items in der DB ist
-const dbPromise = idb.open(idbName+version, 1, function(upgradeDb){
+/**
+* Create DB
+*/
+//Promise welcher zum setzen und holen von items in der DB ist
+let dbPromise = idb.open(idbName+version, 1, function(upgradeDb){
     //DB contains objectstore -> keyVal
     var restaurantsStore = upgradeDb.createObjectStore(idbName+version, {
         keyPath: 'id'
@@ -440,8 +440,7 @@ serveSide = (request) => {
                 for (let i = 0;i < allData.length; i++){
                     data.push(allData[i].data);
                 }
-                console.log('idb');
-                return data;//return data from idb
+                return {data: data, typ: 'idb'};//return data from idb
             }else{
                 return fetch(storageUrl).then((networkResponse) => {//return data from internet
                     return networkResponse.json();
@@ -457,13 +456,11 @@ serveSide = (request) => {
                         });
                         return tx.complete;
                     });
-                    console.log('internet');
-                    return data;
-                })
+                    return {data: data, typ: 'internet'};
+                });
             }
         }).then((data) => {
-            console.log(data);
-            return new Response(JSON.stringify(data), { "status" : 200 , "statusText" : "OK" });
+            return new Response(JSON.stringify(data['data']), { "status" : 200 , "statusText" : "OK" });
         });
     }else{// Cache page data -> OLD code
         if(request.url.indexOf('?') != -1){
