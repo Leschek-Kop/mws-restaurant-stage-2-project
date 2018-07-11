@@ -328,15 +328,21 @@ const version = 'v1';
 const staticCachName = 'restaurant-local-'+version;
 const contentImgsCache = 'restaurant-imgs-'+version;
 const contentCache = 'restaurant-web-'+version;
-const idbName = 'test-db';
+const idbName = 'restaurant-db-';
 
-
-//Promise welcher zum setzen und holen von items in der DB ist
-var dbPromise = idb.open(idbName, 2, function(upgradeDb){
+///**
+//* Create DB
+//*/
+////Promise welcher zum setzen und holen von items in der DB ist
+const dbPromise = idb.open(idbName+version, 1, function(upgradeDb){
     //DB contains objectstore -> keyVal
-    var keyValStore = upgradeDb.createObjectStore('keyval');
-    keyValStore.put('world', 'Hello');
+    var restaurantsStore = upgradeDb.createObjectStore('restaurants', {
+        keyPath: 'id'
+    });
+    restaurantsStore.createIndex('by-id','id');
 });
+
+
 /**
 * Install Service Worker.
  */
@@ -347,8 +353,7 @@ self.addEventListener('install', (event) => {
         'js/main.js',
         'js/dbhelper.js',
         'js/restaurant_info.js',
-        'css/styles.css',
-        'data/restaurants.json'
+        'css/styles.css'
     ];
     event.waitUntil(
         caches.open(staticCachName).then((cache) => {
@@ -362,9 +367,12 @@ self.addEventListener('install', (event) => {
  */
 self.addEventListener('fetch', (event) => {
     const requestUrl = new URL(event.request.url);
+    //console.info(event.request);
     if(requestUrl.origin === location.origin){
         if(requestUrl.pathname.startsWith('/img/')){
-            event.respondWith(servePhoto(event.request));
+            event.respondWith(
+                servePhoto(event.request)
+            );
             return;
         }
     }
@@ -416,21 +424,39 @@ serveContent = (request) => {
 }
 
 /**
-* handle restaurant-local cache.
+* handle restaurant-local cache and idb data.
  */
 serveSide = (request) => {
-    var storageUrl = request.url;
-    if(request.url.indexOf('?') != -1){
-        storageUrl = storageUrl.slice(0, request.url.indexOf('?'));
-    }
-    return caches.open(staticCachName).then((cache) => {
-        return cache.match(storageUrl).then((response) => {
-            if (response) return response;
-
-            return fetch(request).then((networkResponse) => {
-                cache.put(storageUrl, networkResponse.clone());
-                return networkResponse;
+    var reqUrl = new URL(request.url);
+    var storageUrl = request.url;    
+    if (reqUrl.pathname === '/restaurants'){// Put restaurant data to idb -> NEW code
+        
+        
+        
+        //TODO fill db with data
+        
+        
+        
+        
+        
+        return fetch(storageUrl).then((networkResponse) => {
+            return networkResponse.json();
+        }).then((data) => {
+            console.info(data);
+            return new Response(JSON.stringify(data), { "status" : 200 , "statusText" : "OK" });
+        });
+    }else{// Cache page data -> OLD code
+        if(request.url.indexOf('?') != -1){
+            storageUrl = storageUrl.slice(0, request.url.indexOf('?'));
+        }
+        return caches.open(staticCachName).then((cache) => {
+            return cache.match(request.url).then((response) => {
+                if (response) return response;
+                return fetch(request).then((networkResponse) => {
+                    cache.put(request.url, networkResponse.clone());
+                    return networkResponse;
+                });
             });
         });
-    });
+    }
 }
