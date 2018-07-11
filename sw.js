@@ -336,7 +336,7 @@ const idbName = 'restaurant-db-';
 ////Promise welcher zum setzen und holen von items in der DB ist
 const dbPromise = idb.open(idbName+version, 1, function(upgradeDb){
     //DB contains objectstore -> keyVal
-    var restaurantsStore = upgradeDb.createObjectStore('restaurants', {
+    var restaurantsStore = upgradeDb.createObjectStore(idbName+version, {
         keyPath: 'id'
     });
     restaurantsStore.createIndex('by-id','id');
@@ -438,11 +438,22 @@ serveSide = (request) => {
         
         
         
-        
+        //Nothing found in idb
         return fetch(storageUrl).then((networkResponse) => {
             return networkResponse.json();
         }).then((data) => {
             console.info(data);
+            //Adding to idb
+            dbPromise.then(db => {
+                const tx = db.transaction(idbName+version, 'readwrite');
+                data.forEach((d) => {
+                    tx.objectStore(idbName+version).put({
+                        id: d['id'],
+                        data: d
+                    });
+                });
+                return tx.complete;
+            });
             return new Response(JSON.stringify(data), { "status" : 200 , "statusText" : "OK" });
         });
     }else{// Cache page data -> OLD code
